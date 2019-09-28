@@ -16,4 +16,10 @@
     <ProjectReference Include="..\..\Src\Core\Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Data\Scott.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

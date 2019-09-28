@@ -1,9 +1,8 @@
 ﻿using Apps72.Dev.Data;
-using Data.Core.Tests;
+using Core.Tests.Data;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Data.SqlClient;
-using System.Transactions;
 
 namespace Data.Core.Tests
 {
@@ -17,11 +16,19 @@ namespace Data.Core.Tests
         #region INITIALIZATION
 
         private SqlConnection _connection;
+        private LocalDbBuilder _database;
 
         [TestInitialize]
         public void Initialization()
         {
-            _connection = new SqlConnection(Configuration.CONNECTION_STRING);
+            var dbName = $"Apps72_{DateTime.Now:yyyyMMdd_HHmmssfff}";
+            _database = new LocalDbBuilder(dbName);
+            _database
+                .Create()
+                .ExecuteFile(@"Data/Scott.sql");
+
+
+            _connection = new SqlConnection(_database.ConnectionString);
             _connection.Open();
         }
 
@@ -32,8 +39,10 @@ namespace Data.Core.Tests
             {
                 _connection.Close();
                 _connection.Dispose();
+                _database?.Drop();
             }
         }
+
 
         #endregion
 

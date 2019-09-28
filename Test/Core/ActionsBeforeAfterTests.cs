@@ -1,299 +1,310 @@
-using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Apps72.Dev.Data;
-using System.Data.SqlClient;
-using System.Linq;
+//using System;
+//using Microsoft.VisualStudio.TestTools.UnitTesting;
+//using Apps72.Dev.Data;
+//using System.Data.SqlClient;
+//using System.Linq;
+//using Core.Tests.Data;
 
-namespace Data.Core.Tests
-{
-    /*
-        To run these tests, you must have the SCOTT database (scott.sql)
-        and you need to configure your connection string (configuration.cs)
-    */
+//namespace Data.Core.Tests
+//{
+//    /*
+//        To run these tests, you must have the SCOTT database (scott.sql)
+//        and you need to configure your connection string (configuration.cs)
+//    */
 
-    [TestClass]
-    public class ActionsBeforeAfterTests
-    {
-        #region INITIALIZATION
+//    [TestClass]
+//    public class ActionsBeforeAfterTests
+//    {
+//        #region INITIALIZATION
 
-        private SqlConnection _connection;
+//        private SqlConnection _connection;
+//        private LocalDbBuilder _database;
 
-        [TestInitialize]
-        public void Initialization()
-        {
-            _connection = new SqlConnection(Configuration.CONNECTION_STRING);
-            _connection.Open();
-        }
-
-        [TestCleanup]
-        public void Finalization()
-        {
-            if (_connection != null)
-            {
-                _connection.Close();
-                _connection.Dispose();
-            }
-        }
-
-        #endregion
+//        [TestInitialize]
+//        public void Initialization()
+//        {
+//            var dbName = $"Apps72_{DateTime.Now:yyyyMMdd_HHmmssfff}";
+//            _database = new LocalDbBuilder(dbName);
+//            _database
+//                .Create()
+//                .ExecuteFile(@"Data/Scott.sql");
 
 
-        [TestMethod]
-        public void ExecuteNonQuery_ActionBefore_Test()
-        {
-            bool isPassed = false;
+//            _connection = new SqlConnection(_database.ConnectionString);
+//            _connection.Open();
+//        }
 
-            using (var cmd = new DatabaseCommand(_connection))
-            {
-                cmd.Log = Console.WriteLine;
-                cmd.CommandText.AppendLine(" SELECT COUNT(*) FROM EMP ");
+//        [TestCleanup]
+//        public void Finalization()
+//        {
+//            if (_connection != null)
+//            {
+//                _connection.Close();
+//                _connection.Dispose();
+//                _database?.Drop();
+//            }
+//        }
 
-                cmd.ActionBeforeExecution = (command) =>
-                {
-                    command.CommandText.Clear();
-                    command.CommandText.Append("SELECT 1+1 FROM EMP");
-                    isPassed = true;
-                };
 
-                cmd.ExecuteNonQuery();
+//        #endregion
 
-                Assert.IsTrue(isPassed);
-                Assert.AreEqual("SELECT 1+1 FROM EMP", cmd.CommandText.ToString());
-            }
-        }
 
-        [TestMethod]
-        public void ExecuteNonQuery_ActionAfter_Test()
-        {
-            bool isPassed = false;
+//        [TestMethod]
+//        public void ExecuteNonQuery_ActionBefore_Test()
+//        {
+//            bool isPassed = false;
 
-            using (var cmd = new DatabaseCommand(_connection))
-            {
-                cmd.Log = Console.WriteLine;
-                cmd.CommandText.AppendLine(" SELECT COUNT(*) FROM EMP ");
+//            using (var cmd = new DatabaseCommand(_connection))
+//            {
+//                cmd.Log = Console.WriteLine;
+//                cmd.CommandText.AppendLine(" SELECT COUNT(*) FROM EMP ");
 
-                cmd.ActionAfterExecution = (command, tables) =>
-                {
-                    tables.First().Rows[0].ItemArray[0] = 10;
-                    isPassed = true;
-                };
+//                cmd.ActionBeforeExecution = (command) =>
+//                {
+//                    command.CommandText.Clear();
+//                    command.CommandText.Append("SELECT 1+1 FROM EMP");
+//                    isPassed = true;
+//                };
 
-                int rowsAffected = cmd.ExecuteNonQuery();
+//                cmd.ExecuteNonQuery();
 
-                Assert.IsTrue(isPassed);
-                Assert.AreEqual(10, rowsAffected);
-            }
-        }
+//                Assert.IsTrue(isPassed);
+//                Assert.AreEqual("SELECT 1+1 FROM EMP", cmd.CommandText.ToString());
+//            }
+//        }
 
-        [TestMethod]
-        public void ExecuteScalar_ActionBefore_Test()
-        {
-            bool isPassed = false;
+//        [TestMethod]
+//        public void ExecuteNonQuery_ActionAfter_Test()
+//        {
+//            bool isPassed = false;
 
-            using (var cmd = new DatabaseCommand(_connection))
-            {
-                cmd.Log = Console.WriteLine;
-                cmd.CommandText.AppendLine(" SELECT COUNT(*) FROM EMP ");
+//            using (var cmd = new DatabaseCommand(_connection))
+//            {
+//                cmd.Log = Console.WriteLine;
+//                cmd.CommandText.AppendLine(" SELECT COUNT(*) FROM EMP ");
 
-                cmd.ActionBeforeExecution = (command) =>
-                {
-                    command.CommandText.Clear();
-                    command.CommandText.Append("SELECT 1+1 FROM EMP");      // New Count
-                    isPassed = true;
-                };
+//                cmd.ActionAfterExecution = (command, tables) =>
+//                {
+//                    tables.First().Rows[0].ItemArray[0] = 10;
+//                    isPassed = true;
+//                };
 
-                int count = cmd.ExecuteScalar<int>();
+//                int rowsAffected = cmd.ExecuteNonQuery();
 
-                Assert.IsTrue(isPassed);
-                Assert.AreEqual(2, count);                                  // Check new Count
-            }
-        }
+//                Assert.IsTrue(isPassed);
+//                Assert.AreEqual(10, rowsAffected);
+//            }
+//        }
 
-        [TestMethod]
-        public void ExecuteScalar_ActionBefore_ChangeParameter_Test()
-        {
-            bool isPassed = false;
+//        [TestMethod]
+//        public void ExecuteScalar_ActionBefore_Test()
+//        {
+//            bool isPassed = false;
 
-            using (var cmd = new DatabaseCommand(_connection))
-            {
-                cmd.Log = Console.WriteLine;
-                cmd.CommandText.AppendLine(" SELECT SAL FROM EMP WHERE EMPNO = @EmployeeID");
-                cmd.AddParameter("@EmployeeID", 1234);
+//            using (var cmd = new DatabaseCommand(_connection))
+//            {
+//                cmd.Log = Console.WriteLine;
+//                cmd.CommandText.AppendLine(" SELECT COUNT(*) FROM EMP ");
 
-                cmd.ActionBeforeExecution = (command) =>
-                {
-                    cmd.Parameters["@EmployeeID"].Value = 7369;
-                    isPassed = true;
-                };
+//                cmd.ActionBeforeExecution = (command) =>
+//                {
+//                    command.CommandText.Clear();
+//                    command.CommandText.Append("SELECT 1+1 FROM EMP");      // New Count
+//                    isPassed = true;
+//                };
 
-                var salary = cmd.ExecuteScalar<decimal>();
+//                int count = cmd.ExecuteScalar<int>();
 
-                Assert.IsTrue(isPassed);
-                Assert.AreEqual(800, salary);                                  // Check Salary for 7369 (and not 1234)
-            }
-        }
+//                Assert.IsTrue(isPassed);
+//                Assert.AreEqual(2, count);                                  // Check new Count
+//            }
+//        }
 
-        [TestMethod]
-        public void ExecuteScalar_ActionAfter_Test()
-        {
-            bool isPassed = false;
+//        [TestMethod]
+//        public void ExecuteScalar_ActionBefore_ChangeParameter_Test()
+//        {
+//            bool isPassed = false;
 
-            using (var cmd = new DatabaseCommand(_connection))
-            {
-                cmd.Log = Console.WriteLine;
-                cmd.CommandText.AppendLine(" SELECT COUNT(*) FROM EMP ");
+//            using (var cmd = new DatabaseCommand(_connection))
+//            {
+//                cmd.Log = Console.WriteLine;
+//                cmd.CommandText.AppendLine(" SELECT SAL FROM EMP WHERE EMPNO = @EmployeeID");
+//                cmd.AddParameter("@EmployeeID", 1234);
 
-                cmd.ActionAfterExecution = (command, tables) =>
-                {
-                    tables.First().Rows[0].ItemArray[0] = 10;               // New Count
-                    isPassed = true;
-                };
+//                cmd.ActionBeforeExecution = (command) =>
+//                {
+//                    cmd.Parameters["@EmployeeID"].Value = 7369;
+//                    isPassed = true;
+//                };
 
-                int count = cmd.ExecuteScalar<int>();
+//                var salary = cmd.ExecuteScalar<decimal>();
 
-                Assert.IsTrue(isPassed);
-                Assert.AreEqual(10, count);                                  // Check new Count
-            }
-        }
+//                Assert.IsTrue(isPassed);
+//                Assert.AreEqual(800, salary);                                  // Check Salary for 7369 (and not 1234)
+//            }
+//        }
 
-        [TestMethod]
-        public void ExecuteRow_ActionBefore_Test()
-        {
-            bool isPassed = false;
+//        [TestMethod]
+//        public void ExecuteScalar_ActionAfter_Test()
+//        {
+//            bool isPassed = false;
 
-            using (var cmd = new DatabaseCommand(_connection))
-            {
-                cmd.Log = Console.WriteLine;
-                cmd.CommandText.AppendLine(" SELECT * FROM EMP ");
+//            using (var cmd = new DatabaseCommand(_connection))
+//            {
+//                cmd.Log = Console.WriteLine;
+//                cmd.CommandText.AppendLine(" SELECT COUNT(*) FROM EMP ");
 
-                cmd.ActionBeforeExecution = (command) =>
-                {
-                    cmd.CommandText.AppendLine(" WHERE EMPNO = 7369 ");
-                    isPassed = true;
-                };
+//                cmd.ActionAfterExecution = (command, tables) =>
+//                {
+//                    tables.First().Rows[0].ItemArray[0] = 10;               // New Count
+//                    isPassed = true;
+//                };
 
-                var row = cmd.ExecuteRow<EMP>();
+//                int count = cmd.ExecuteScalar<int>();
 
-                Assert.IsTrue(isPassed);
-                Assert.AreEqual("SMITH", row.EName);
-            }
-        }
+//                Assert.IsTrue(isPassed);
+//                Assert.AreEqual(10, count);                                  // Check new Count
+//            }
+//        }
 
-        [TestMethod]
-        public void ExecuteRow_ActionAfter_Test()
-        {
-            bool isPassed = false;
+//        [TestMethod]
+//        public void ExecuteRow_ActionBefore_Test()
+//        {
+//            bool isPassed = false;
 
-            using (var cmd = new DatabaseCommand(_connection))
-            {
-                cmd.Log = Console.WriteLine;
-                cmd.CommandText.AppendLine(" SELECT * FROM EMP ");
+//            using (var cmd = new DatabaseCommand(_connection))
+//            {
+//                cmd.Log = Console.WriteLine;
+//                cmd.CommandText.AppendLine(" SELECT * FROM EMP ");
 
-                cmd.ActionBeforeExecution = (command) =>
-                {
-                    isPassed = true;
-                };
+//                cmd.ActionBeforeExecution = (command) =>
+//                {
+//                    cmd.CommandText.AppendLine(" WHERE EMPNO = 7369 ");
+//                    isPassed = true;
+//                };
 
-                var row = cmd.ExecuteRow<EMP>();
+//                var row = cmd.ExecuteRow<EMP>();
 
-                Assert.IsTrue(isPassed);
-            }
-        }
+//                Assert.IsTrue(isPassed);
+//                Assert.AreEqual("SMITH", row.EName);
+//            }
+//        }
 
-        [TestMethod]
-        public void ExecuteTable_ActionBefore_Test()
-        {
-            bool isPassed = false;
+//        [TestMethod]
+//        public void ExecuteRow_ActionAfter_Test()
+//        {
+//            bool isPassed = false;
 
-            using (var cmd = new DatabaseCommand(_connection))
-            {
-                cmd.Log = Console.WriteLine;
-                cmd.CommandText.AppendLine(" SELECT * FROM EMP ");
+//            using (var cmd = new DatabaseCommand(_connection))
+//            {
+//                cmd.Log = Console.WriteLine;
+//                cmd.CommandText.AppendLine(" SELECT * FROM EMP ");
 
-                cmd.ActionBeforeExecution = (command) =>
-                {
-                    cmd.CommandText.AppendLine(" WHERE EMPNO > 7369 ");
-                    isPassed = true;
-                };
+//                cmd.ActionBeforeExecution = (command) =>
+//                {
+//                    isPassed = true;
+//                };
 
-                var data = cmd.ExecuteTable<EMP>();
+//                var row = cmd.ExecuteRow<EMP>();
 
-                Assert.IsTrue(isPassed);
-                Assert.AreEqual(13, data.Count());
-                Assert.AreEqual("ALLEN", data.First().EName);
-            }
-        }
+//                Assert.IsTrue(isPassed);
+//            }
+//        }
 
-        [TestMethod]
-        public void ExecuteTable_ActionAfter_Test()
-        {
-            bool isPassed = false;
+//        [TestMethod]
+//        public void ExecuteTable_ActionBefore_Test()
+//        {
+//            bool isPassed = false;
 
-            using (var cmd = new DatabaseCommand(_connection))
-            {
-                cmd.Log = Console.WriteLine;
-                cmd.CommandText.AppendLine(" SELECT * FROM EMP ");
+//            using (var cmd = new DatabaseCommand(_connection))
+//            {
+//                cmd.Log = Console.WriteLine;
+//                cmd.CommandText.AppendLine(" SELECT * FROM EMP ");
 
-                cmd.ActionBeforeExecution = (command) =>
-                {
-                    isPassed = true;
-                };
+//                cmd.ActionBeforeExecution = (command) =>
+//                {
+//                    cmd.CommandText.AppendLine(" WHERE EMPNO > 7369 ");
+//                    isPassed = true;
+//                };
 
-                var data = cmd.ExecuteTable<EMP>();
+//                var data = cmd.ExecuteTable<EMP>();
 
-                Assert.IsTrue(isPassed);
-                Assert.AreEqual(14, data.Count());
-            }
-        }
+//                Assert.IsTrue(isPassed);
+//                Assert.AreEqual(13, data.Count());
+//                Assert.AreEqual("ALLEN", data.First().EName);
+//            }
+//        }
 
-        [TestMethod]
-        public void ExecuteDataSet_ActionBefore_Test()
-        {
-            bool isPassed = false;
+//        [TestMethod]
+//        public void ExecuteTable_ActionAfter_Test()
+//        {
+//            bool isPassed = false;
 
-            using (var cmd = new DatabaseCommand(_connection))
-            {
-                cmd.Log = Console.WriteLine;
-                cmd.CommandText.AppendLine(" SELECT * FROM EMP; ");
-                cmd.CommandText.AppendLine(" SELECT * FROM DEPT; ");
+//            using (var cmd = new DatabaseCommand(_connection))
+//            {
+//                cmd.Log = Console.WriteLine;
+//                cmd.CommandText.AppendLine(" SELECT * FROM EMP ");
 
-                cmd.ActionBeforeExecution = (command) =>
-                {
-                    cmd.CommandText.Replace("FROM EMP;", "FROM EMP WHERE EMPNO > 7369; ");
-                    isPassed = true;
-                };
+//                cmd.ActionBeforeExecution = (command) =>
+//                {
+//                    isPassed = true;
+//                };
 
-                var data = cmd.ExecuteDataSet<EMP, DEPT>();
+//                var data = cmd.ExecuteTable<EMP>();
 
-                Assert.IsTrue(isPassed);
-                Assert.AreEqual(13, data.Item1.Count());
-                Assert.AreEqual(4, data.Item2.Count());
-            }
-        }
+//                Assert.IsTrue(isPassed);
+//                Assert.AreEqual(14, data.Count());
+//            }
+//        }
 
-        [TestMethod]
-        public void ExecuteDataSet_ActionAfter_Test()
-        {
-            bool isPassed = false;
+//        [TestMethod]
+//        public void ExecuteDataSet_ActionBefore_Test()
+//        {
+//            bool isPassed = false;
 
-            using (var cmd = new DatabaseCommand(_connection))
-            {
-                cmd.Log = Console.WriteLine;
-                cmd.CommandText.AppendLine(" SELECT * FROM EMP; ");
-                cmd.CommandText.AppendLine(" SELECT * FROM DEPT; ");
+//            using (var cmd = new DatabaseCommand(_connection))
+//            {
+//                cmd.Log = Console.WriteLine;
+//                cmd.CommandText.AppendLine(" SELECT * FROM EMP; ");
+//                cmd.CommandText.AppendLine(" SELECT * FROM DEPT; ");
 
-                cmd.ActionBeforeExecution = (command) =>
-                {
-                    isPassed = true;
-                };
+//                cmd.ActionBeforeExecution = (command) =>
+//                {
+//                    cmd.CommandText.Replace("FROM EMP;", "FROM EMP WHERE EMPNO > 7369; ");
+//                    isPassed = true;
+//                };
 
-                var data = cmd.ExecuteDataSet<EMP, DEPT>();
+//                var data = cmd.ExecuteDataSet<EMP, DEPT>();
 
-                Assert.IsTrue(isPassed);
-                Assert.AreEqual(14, data.Item1.Count());
-                Assert.AreEqual(4, data.Item2.Count());
-            }
-        }
+//                Assert.IsTrue(isPassed);
+//                Assert.AreEqual(13, data.Item1.Count());
+//                Assert.AreEqual(4, data.Item2.Count());
+//            }
+//        }
 
-    }
-}
+//        [TestMethod]
+//        public void ExecuteDataSet_ActionAfter_Test()
+//        {
+//            bool isPassed = false;
+
+//            using (var cmd = new DatabaseCommand(_connection))
+//            {
+//                cmd.Log = Console.WriteLine;
+//                cmd.CommandText.AppendLine(" SELECT * FROM EMP; ");
+//                cmd.CommandText.AppendLine(" SELECT * FROM DEPT; ");
+
+//                cmd.ActionBeforeExecution = (command) =>
+//                {
+//                    isPassed = true;
+//                };
+
+//                var data = cmd.ExecuteDataSet<EMP, DEPT>();
+
+//                Assert.IsTrue(isPassed);
+//                Assert.AreEqual(14, data.Item1.Count());
+//                Assert.AreEqual(4, data.Item2.Count());
+//            }
+//        }
+
+//    }
+//}
